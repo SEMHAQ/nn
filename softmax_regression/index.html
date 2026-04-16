@@ -5,15 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Softmax regression - 神经网络</title>
+    <title>softmax回归 - 神经网络</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
-        <link href="../extra.css" rel="stylesheet" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Softmax regression";
+        var mkdocs_page_name = "softmax\u56de\u5f52";
         var mkdocs_page_input_path = "softmax_regression.md";
         var mkdocs_page_url = null;
       </script>
@@ -44,6 +43,50 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">首页</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">入门</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../issue/">issue统计测试</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../warmup/">热身</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../linear_regression/">线性回归</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">softmax回归</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../svm/">支持向量机</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../simple_nn/">简单神经网络</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../CNN/">卷积神经网络</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../RNN/">循环神经网络</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../attention/">注意力机制</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../gaussian_mixture/">高斯混合</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../RBM/">受限玻尔兹曼机</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../RL/">强化学习</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">感知</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../carla_CAM/">carla_CAM</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tracking/">跟踪</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">规划</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../navigation/">导航</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">控制</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../pid/">PID</a>
+                  </li>
+              </ul>
       </div>
     </div>
     </nav>
@@ -58,7 +101,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Softmax regression</li>
+          <li class="breadcrumb-item">入门</li>
+      <li class="breadcrumb-item active">softmax回归</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/OpenHUTB/nn/edit/master/docs/softmax_regression.md" class="icon icon-github"> 在 GitHub 上编辑</a>
     </li>
@@ -72,6 +116,10 @@
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../linear_regression/" class="btn btn-neutral float-left" title="线性回归"><span class="icon icon-circle-arrow-left"></span> 前一页</a>
+        <a href="../svm/" class="btn btn-neutral float-right" title="支持向量机">后一页 <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -97,6 +145,10 @@
         </span>
     
     
+      <span><a href="../linear_regression/" style="color: #fcfcfc">&laquo; 前一页</a></span>
+    
+    
+      <span><a href="../svm/" style="color: #fcfcfc">后一页 &raquo;</a></span>
     
   </span>
 </div>
@@ -104,7 +156,6 @@
     <script>var base_url = "..";</script>
     <script src="../js/theme_extra.js"></script>
     <script src="../js/theme.js"></script>
-      <script src="../extra.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
       <script src="../search/main.js"></script>
     <script>
