@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
     
       <script>
         // Current page data
@@ -43,49 +44,9 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">首页</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">入门</span></p>
-              <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../issue/">issue统计测试</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../warmup/">热身</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../linear_regression/">线性回归</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../softmax_regression/">softmax回归</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../svm/">支持向量机</a>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">简单神经网络</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../CNN/">卷积神经网络</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../RNN/">循环神经网络</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../attention/">注意力机制</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gaussian_mixture/">高斯混合</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../RBM/">受限玻尔兹曼机</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../RL/">强化学习</a>
-                  </li>
-              </ul>
-              <p class="caption"><span class="caption-text">感知</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../carla_CAM/">carla_CAM</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tracking/">跟踪</a>
-                  </li>
-              </ul>
-              <p class="caption"><span class="caption-text">规划</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../navigation/">导航</a>
-                  </li>
-              </ul>
-              <p class="caption"><span class="caption-text">控制</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../pid/">PID</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../carla_yolo_detection/">自动驾驶感知系统</a>
+                </li>
               </ul>
       </div>
     </div>
@@ -101,7 +62,6 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">入门</li>
       <li class="breadcrumb-item active">简单神经网络</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/OpenHUTB/nn/edit/master/docs/simple_nn.md" class="icon icon-github"> 在 GitHub 上编辑</a>
@@ -112,14 +72,65 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                
+                <h1 id="_1">简单神经网络</h1>
+<h2 id="_2">概述</h2>
+<p>简单神经网络是深度学习的基础，通常指包含一个或少数几个隐藏层的前馈神经网络，是理解复杂神经网络架构的起点。</p>
+<h2 id="_3">主要特点</h2>
+<ul>
+<li><strong>前馈结构</strong>：信息从输入层单向流向输出层</li>
+<li><strong>全连接</strong>：相邻层的神经元全部连接</li>
+<li><strong>非线性激活</strong>：使用激活函数引入非线性</li>
+</ul>
+<h2 id="_4">基本结构</h2>
+<h3 id="1-input-layer">1. 输入层 (Input Layer)</h3>
+<ul>
+<li>接收原始特征数据</li>
+<li>节点数量等于特征维度</li>
+</ul>
+<h3 id="2-hidden-layer">2. 隐藏层 (Hidden Layer)</h3>
+<ul>
+<li>提取数据特征</li>
+<li>可以有多个隐藏层</li>
+<li>节点数量影响模型容量</li>
+</ul>
+<h3 id="3-output-layer">3. 输出层 (Output Layer)</h3>
+<ul>
+<li>产生最终预测结果</li>
+<li>节点数量取决于任务类型</li>
+</ul>
+<h2 id="_5">激活函数</h2>
+<h3 id="_6">常用激活函数</h3>
+<ul>
+<li><strong>Sigmoid</strong>：将输出映射到(0,1)区间</li>
+<li><strong>Tanh</strong>：将输出映射到(-1,1)区间</li>
+<li><strong>ReLU</strong>：修正线性单元，max(0,x)</li>
+</ul>
+<h2 id="_7">训练过程</h2>
+<h3 id="1">1. 前向传播</h3>
+<ul>
+<li>计算各层输出</li>
+<li>得到预测结果</li>
+</ul>
+<h3 id="2">2. 计算损失</h3>
+<ul>
+<li>使用损失函数衡量预测误差</li>
+<li>常用均方误差、交叉熵等</li>
+</ul>
+<h3 id="3">3. 反向传播</h3>
+<ul>
+<li>计算梯度</li>
+<li>更新权重和偏置</li>
+</ul>
+<h2 id="_8">应用领域</h2>
+<ul>
+<li>分类问题</li>
+<li>回归问题</li>
+<li>模式识别</li>
+<li>函数逼近</li>
+</ul>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../svm/" class="btn btn-neutral float-left" title="支持向量机"><span class="icon icon-circle-arrow-left"></span> 前一页</a>
-        <a href="../CNN/" class="btn btn-neutral float-right" title="卷积神经网络">后一页 <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -145,10 +156,6 @@
         </span>
     
     
-      <span><a href="../svm/" style="color: #fcfcfc">&laquo; 前一页</a></span>
-    
-    
-      <span><a href="../CNN/" style="color: #fcfcfc">后一页 &raquo;</a></span>
     
   </span>
 </div>
@@ -156,6 +163,7 @@
     <script>var base_url = "..";</script>
     <script src="../js/theme_extra.js"></script>
     <script src="../js/theme.js"></script>
+      <script src="../extra.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
       <script src="../search/main.js"></script>
     <script>
