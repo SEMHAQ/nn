@@ -79,191 +79,670 @@
 <p>整个项目历时一个月（2026年3月14日 - 4月13日），共提交 <strong>11 个 Pull Request</strong> 并全部合并，累计新增代码超过 <strong>36 万行</strong>，涵盖工程开发、模型训练、性能评估与开源协作的全生命周期。</p>
 <hr />
 <h2 id="1">1. 项目背景与立项依据</h2>
-<h3 id="1-1">1. 1 课程实践背景</h3>
+<h3 id="11">1.1 课程实践背景</h3>
 <p>本项目源于《基础软件和开源系统》课程的实践要求，旨在通过向开源社区（<code>OpenHUTB/nn</code>）贡献高质量的代码与文档，完整走通 <strong>"Issue 分析 -&gt; 分支管理 -&gt; 功能开发 -&gt; 测试验证 -&gt; 文档撰写 -&gt; Pull Request 提交"</strong> 的标准化软件工程流程。</p>
 <p><code>OpenHUTB/nn</code> 是湖南工商大学的神经网络教学与科研平台，使用神经网络实现感知、规划和控制功能，覆盖 Carla（自动驾驶）、AirSim（无人机）和 MuJoCo（人形机器人）三大模拟器。</p>
-<h3 id="1-2">1. 2 技术背景</h3>
+<h3 id="12">1.2 技术背景</h3>
 <p>在自动驾驶感知系统中，<strong>车辆检测与计数</strong>是交通流量分析、智能交通管理的基础能力。传统方法依赖于背景减除或光流法，受光照变化和遮挡影响较大。YOLO 系列模型作为单阶段目标检测的代表，以高精度和实时性成为该领域的主流方案。</p>
 <p>本项目选取两个技术方向切入：</p>
 <ul>
 <li><strong>YOLO11n 车辆计数</strong>：基于 YOLO11n 轻量化模型，构建多场景、多功能的车辆计数管线，验证从基础检测到复杂场景计数的工程化能力。</li>
 <li><strong>YOLO12 目标检测</strong>：基于最新的 YOLO12 架构，在 CARLA 模拟器生成的数据集上进行训练与改进，探索注意力机制增强的检测模型。</li>
 </ul>
-<h3 id="1-3">1. 3 技术选型</h3>
+<h3 id="13">1.3 技术选型</h3>
 <table>
 <thead>
 <tr>
 <th>技术/工具</th>
+<th>版本</th>
 <th>用途</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Python 3.11+</td>
+<td>Python</td>
+<td>3.11+</td>
 <td>核心开发语言</td>
 </tr>
 <tr>
 <td>Ultralytics YOLO</td>
-<td>YOLO11n / YOLO12 模型框架</td>
+<td>11n / 12</td>
+<td>目标检测模型框架</td>
 </tr>
 <tr>
 <td>OpenCV</td>
+<td>4.x</td>
 <td>视频处理与可视化</td>
 </tr>
 <tr>
 <td>Supervision</td>
+<td>latest</td>
 <td>目标检测标注与跟踪工具库</td>
 </tr>
 <tr>
-<td>CARLA 0.9.x</td>
+<td>CARLA</td>
+<td>0.9.x</td>
 <td>自动驾驶模拟器</td>
 </tr>
 <tr>
-<td>Windows 10 Pro</td>
+<td>NumPy</td>
+<td>latest</td>
+<td>数值计算</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>10 Pro</td>
 <td>开发与测试环境</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="2-yolo11n">2. 项目一：YOLO11n 多版本车辆计数系统</h2>
-<h3 id="2-1">2. 1 项目概述</h3>
+<h3 id="21">2.1 项目概述</h3>
 <p>本项目基于 YOLO11n 构建了一套可扩展的车辆计数系统，通过 <code>--version</code> 参数切换不同计数模式，逐步迭代出五个功能版本。系统支持实时视频处理、车辆轨迹绘制、多区域计数以及精度评估。</p>
 <p><strong>相关 PR</strong>：#5169、#5215、#5221、#5229、#5230、#5232、#5236</p>
-<h3 id="2-2">2. 2 系统架构</h3>
+<h3 id="22">2.2 项目目录结构</h3>
+<pre><code>yolo11n_vehicle_counter/
+├── main.py                          # 统一入口，命令行参数解析
+├── README.md                        # 项目文档
+├── requirements.txt                 # 依赖配置
+├── dataset/                         # 测试数据集
+│   ├── sample.mp4                   # 原始测试视频
+│   ├── sample_updown.mp4            # 上下行测试视频
+│   ├── sample_imporved.mp4          # 改进版测试视频
+│   └── sample_region.mp4            # 区域计数测试视频
+├── scripts/                         # 核心脚本
+│   ├── yolo_vehicle_counter.py      # 原始版本
+│   ├── yolo_vehicle_counter_improved.py   # 改进版本（椭圆标注+多边形ROI）
+│   ├── yolo_vehicle_counter_updown.py     # 上下行版本
+│   ├── yolo_vehicle_counter_carla.py      # CARLA专用版本
+│   ├── yolo_vehicle_counter_region.py     # 区域计数版本
+│   ├── carla_launcher.py            # CARLA车辆生成器
+│   ├── keyboard_handler.py          # 键盘事件处理
+│   └── draggable_handler.py         # 拖拽交互处理
+└── models/                          # YOLO模型文件
+    └── yolo11n.pt
+</code></pre>
+<h3 id="23">2.3 系统架构</h3>
 <p>系统采用函数式架构设计，以 <code>main.py</code> 为统一入口，通过参数解析分发到不同版本的计数模块：</p>
 <pre><code>main.py (统一入口)
-├── --version original    → yolo_vehicle_counter.py
-├── --version improved    → yolo_vehicle_counter_improved.py
-├── --version updown      → yolo_vehicle_counter_updown.py
-├── --version carla       → yolo_vehicle_counter_carla.py
-└── --version region      → yolo_vehicle_counter_region.py
+│
+├── --version original    → yolo_vehicle_counter.py          # 基础矩形框计数
+├── --version improved    → yolo_vehicle_counter_improved.py # 椭圆标注+多边形ROI
+├── --version updown      → yolo_vehicle_counter_updown.py   # 上下行分方向计数
+├── --version carla       → yolo_vehicle_counter_carla.py    # CARLA模拟器专用
+└── --version region      → yolo_vehicle_counter_region.py   # 高级区域计数
 </code></pre>
-<h3 id="2-3">2. 3 版本迭代详情</h3>
-<h4 id="231-pr-5215">2.3.1 原版（PR #5215）</h4>
-<p>基础版本实现了完整的车辆检测与计数流程：</p>
-<ul>
-<li>命令行参数解析（模型路径、输入/输出视频）</li>
-<li>实时视频处理，绘制车辆边界框与运动轨迹</li>
-<li>实时显示当前车辆计数</li>
-<li>支持 'p' 键暂停/恢复</li>
-</ul>
-<h4 id="232-pr-5221">2.3.2 改进版（PR #5221）</h4>
-<p>在原版基础上增强了可视化效果与区域选择能力：</p>
-<ul>
-<li>引入 <code>EllipseAnnotator</code> 椭圆标注替代矩形框，视觉效果更自然</li>
-<li>支持多边形 ROI（感兴趣区域），适应复杂监控场景</li>
-<li>优化轨迹跟踪与计数逻辑</li>
-<li>添加 <code>.gitignore</code> 排除大型模型目录</li>
-</ul>
-<h4 id="233-pr-5229">2.3.3 上下行版（PR #5229）</h4>
-<p>实现了分方向的车辆计数功能：</p>
-<ul>
-<li>基于分区的双向计数：左侧区域（0-550px）统计上行，右侧区域（550-1280px）统计下行</li>
-<li>通过 <code>--version updown</code> 参数调用</li>
-<li>代码符合 PEP 8 规范，注释完整</li>
-</ul>
-<h4 id="234-carla-pr-5230">2.3.4 CARLA 版（PR #5230）</h4>
-<p>集成了 CARLA 模拟器支持：</p>
-<ul>
-<li><code>carla_launcher.py</code>：优化的车辆生成算法，解决了碰撞/卡死问题，支持生成 100 辆车</li>
-<li><code>yolo_vehicle_counter_carla.py</code>：针对 CARLA 录制视频优化，红线位置 y=500，ROI 调优减少天空干扰，置信度阈值降至 0.4</li>
-<li>测试环境：Windows 10, Python 3.12, CARLA 0.9.x</li>
-</ul>
-<h4 id="235-pr-5232">2.3.5 区域版（PR #5232）</h4>
-<p>高级区域计数版本，支持复杂路况：</p>
-<ul>
-<li>检测平滑处理，减少计数抖动</li>
-<li>双向交通流量统计</li>
-<li>多边形区域计数，适应复杂道路布局</li>
-<li>自定义可视化增强（半透明叠加层、轨迹标注）</li>
-<li>动态区域缩放适配不同分辨率</li>
-<li>底部中心计数策略，提升准确性</li>
-</ul>
-<h3 id="2-4-pr-5236">2. 4 精度衡量功能（PR #5236）</h3>
-<p>为系统添加了完整的精度评估模块：</p>
-<ul>
-<li><code>--ground-truth</code> 参数支持真值文件输入</li>
-<li>支持两种格式：简单总数格式和分段验证格式（每行一个数字）</li>
-<li>实时显示 ACC 和 F1 指标</li>
-<li>处理完成后输出详细精度报告</li>
-<li>基于检测置信度的帧级精度计算</li>
-</ul>
-<pre><code class="language-bash">python main.py --version original --ground-truth dataset/ground_truth/ground_truth.txt
+<p>命令行参数设计：</p>
+<pre><code class="language-bash">python main.py [--model MODEL_PATH] [--input INPUT_VIDEO] [--output OUTPUT_VIDEO] [--version VERSION] [--ground-truth GT_FILE]
 </code></pre>
-<h3 id="2-5">2. 5 技术亮点</h3>
-<ol>
-<li><strong>模块化设计</strong>：统一入口 + 版本分发，新增版本无需修改主流程</li>
-<li><strong>渐进式迭代</strong>：从基础功能到复杂场景，每个版本解决特定问题</li>
-<li><strong>仿真集成</strong>：与 CARLA 模拟器深度集成，形成数据采集到检测验证的闭环</li>
-<li><strong>量化评估</strong>：引入精度指标，支持科学的性能对比</li>
-</ol>
-<hr />
-<h2 id="3-yolo12-carla">3. 项目二：YOLO12 CARLA 数据集目标检测</h2>
-<h3 id="3-1">3. 1 项目概述</h3>
-<p>本项目基于 YOLO12 架构，在 CARLA 模拟器生成的目标检测数据集上完成从 Baseline 训练到模型改进的全流程实验。</p>
-<p><strong>相关 PR</strong>：#5263、#5268、#5276、#5303</p>
-<h3 id="3-2">3. 2 数据集</h3>
-<p>数据集来源：<a href="https://github.com/DanielHfnr/Carla-Object-Detection-Dataset">Carla-Object-Detection-Dataset</a></p>
-<p>包含 5 个类别：</p>
 <table>
 <thead>
 <tr>
-<th>类别</th>
+<th>参数</th>
+<th>默认值</th>
 <th>说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>vehicle</td>
-<td>车辆</td>
+<td><code>--model</code></td>
+<td><code>models/yolo11n.pt</code></td>
+<td>YOLO 模型文件路径</td>
 </tr>
 <tr>
-<td>bike</td>
-<td>自行车</td>
+<td><code>--input</code></td>
+<td><code>dataset/sample.mp4</code></td>
+<td>输入视频路径</td>
 </tr>
 <tr>
-<td>motobike</td>
-<td>摩托车</td>
+<td><code>--output</code></td>
+<td><code>res/sample_res.mp4</code></td>
+<td>输出视频路径</td>
 </tr>
 <tr>
-<td>traffic_light</td>
-<td>交通灯</td>
+<td><code>--version</code></td>
+<td><code>original</code></td>
+<td>版本选择：original/improved/updown/carla/region</td>
 </tr>
 <tr>
-<td>traffic_sign</td>
-<td>交通标志</td>
+<td><code>--ground-truth</code></td>
+<td>无</td>
+<td>真值文件路径（精度衡量）</td>
 </tr>
 </tbody>
 </table>
-<h3 id="3-3-baseline-pr-52635268">3. 3 Baseline 训练与验证（PR #5263、#5268）</h3>
-<p>完成了完整的训练验证管线：</p>
+<h3 id="24">2.4 版本迭代详情</h3>
+<h4 id="241-pr-5215">2.4.1 原版 — 基础车辆检测与计数（PR #5215）</h4>
+<p><strong>目标</strong>：实现完整的车辆检测与计数基础流程。</p>
+<p><strong>核心功能</strong>：</p>
 <ul>
-<li>创建统一入口 <code>main.py</code>，支持 <code>train</code>、<code>val</code>、<code>predict</code> 三种命令</li>
-<li>配置数据集路径与 <code>data.yaml</code></li>
-<li>使用 YOLO12n 作为 Baseline 模型进行训练</li>
-<li>完成验证并记录性能指标</li>
+<li>基于 YOLO11n 模型的实时目标检测</li>
+<li>车辆边界框绘制与类别标签显示</li>
+<li>运动轨迹可视化，记录车辆行驶路径</li>
+<li>实时车辆计数显示</li>
+<li>支持 'p' 键暂停/恢复视频播放</li>
+<li>命令行参数配置（模型路径、输入/输出视频路径）</li>
+<li>处理结果自动保存到指定路径</li>
 </ul>
-<pre><code class="language-bash">python main.py train    # 训练
-python main.py val      # 验证
-python main.py predict  # 推理
+<p><strong>技术实现</strong>：</p>
+<ul>
+<li>将原有脚本重构为函数式架构，支持外部参数传入</li>
+<li>所有注释中文化，路径配置提取到文件开头常量区域</li>
+<li>中文化 README 文档，完善使用说明和配置说明</li>
+</ul>
+<p><strong>运行效果</strong>：</p>
+<p><img width="1843" height="981" alt="原版运行效果" src="https://github.com/user-attachments/assets/6618de06-d09e-4683-95be-aa829d8b883b" /></p>
+<p><em>图 2.1：原版车辆计数系统运行效果。可以看到实时检测车辆边界框、类别标签、运动轨迹和车辆计数。</em></p>
+<hr />
+<h4 id="242-roipr-5221">2.4.2 改进版 — 椭圆标注与多边形ROI（PR #5221）</h4>
+<p><strong>目标</strong>：增强可视化效果，支持更灵活的监控区域设置。</p>
+<p><strong>核心改进</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>改进项</th>
+<th>原版</th>
+<th>改进版</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>标注样式</td>
+<td>矩形边界框</td>
+<td>椭圆标注（EllipseAnnotator）</td>
+</tr>
+<tr>
+<td>区域选择</td>
+<td>全画面检测</td>
+<td>多边形 ROI 自定义区域</td>
+</tr>
+<tr>
+<td>轨迹跟踪</td>
+<td>基础轨迹</td>
+<td>优化的轨迹追踪和计数逻辑</td>
+</tr>
+<tr>
+<td>输出命名</td>
+<td>固定路径</td>
+<td>支持 improved 后缀自动命名</td>
+</tr>
+</tbody>
+</table>
+<p><strong>技术细节</strong>：</p>
+<ul>
+<li>引入 <code>supervision.EllipseAnnotator</code> 替代矩形框，椭圆标注更贴合车辆形状，视觉效果更自然</li>
+<li>多边形 ROI 支持用户自定义复杂监控区域（如不规则路口、弯道等）</li>
+<li>添加 <code>.gitignore</code> 排除大型模型目录（models/），减小仓库体积</li>
+</ul>
+<p><strong>运行效果</strong>：</p>
+<p>可在 <a href="https://drive.google.com/drive/folders/10LTBv6ae3D-Tifn__pSU7krhtJOIl_So?usp=drive_link">Google Drive 链接</a> 查看运行效果视频：</p>
+<ul>
+<li><code>sample.mp4</code> — 原始测试视频</li>
+<li><code>sample_res.mp4</code> — 原始版本运行结果</li>
+<li><code>sample_res_improved.mp4</code> — 改进版本运行结果（推荐查看）</li>
+</ul>
+<p>改进版本特点：
+- 椭圆边界框标注，视觉效果更佳
+- 车辆标签清晰显示（包含 ID 和类型）
+- 运动轨迹线直观展示车辆行驶路径
+- 实时计数显示，准确统计穿越车辆
+- 多边形 ROI 区域，精准监控特定区域</p>
+<hr />
+<h4 id="243-pr-5229">2.4.3 上下行版 — 双向车道计数（PR #5229）</h4>
+<p><strong>目标</strong>：支持多车道分别统计上下行方向车辆。</p>
+<p><strong>核心功能</strong>：</p>
+<ul>
+<li>分区计数逻辑：左侧区域（0-550px）统计上行车辆，右侧区域（550-1280px）统计下行车辆</li>
+<li>通过 <code>--version updown</code> 参数调用</li>
+<li>所有代码注释中文化，符合 PEP 8 规范</li>
+</ul>
+<p><strong>分区计数原理</strong>：</p>
+<pre><code>视频画面 (1280px)
+┌─────────────────┬─────────────────────┐
+│                 │                     │
+│   上行区域      │     下行区域        │
+│   (0-550px)     │    (550-1280px)     │
+│                 │                     │
+│   UP: 12        │     DOWN: 8         │
+│                 │                     │
+└─────────────────┴─────────────────────┘
 </code></pre>
-<h3 id="3-4">3. 4 模型改进</h3>
-<p>在 Baseline 基础上，提出了两种改进方案，通过替换 YOLO12 中的标准 A2C2f 模块实现性能提升。</p>
-<h4 id="341-a2c2f-cglu-pr-5276">3.4.1 A2C2f-CGLU 改进模型（PR #5276）</h4>
+<p><strong>测试内容</strong>：</p>
 <ul>
-<li>新增模型配置 <code>yolo12-A2C2f-CGLU.yaml</code></li>
-<li>使用 CGLU（Convolutional Gated Linear Unit）模块替代标准 A2C2f</li>
-<li>CGLU 通过门控机制增强特征选择能力，有助于提升小目标检测精度</li>
-<li>预配置 5 类别适配 CARLA 数据集</li>
+<li>上下行计数功能测试：确保能正确区分和统计上下行车辆</li>
+<li>分区计数逻辑测试：验证左侧和右侧区域计数准确</li>
+<li>与现有版本兼容性测试：确保不影响原始版本和改进版本</li>
 </ul>
-<h4 id="342-a2c2f-dffn-pr-5303">3.4.2 A2C2f-DFFN 改进模型（PR #5303）</h4>
+<p><strong>运行效果</strong>：</p>
+<p><img alt="上下行计数效果1" src="https://github.com/user-attachments/assets/dcb6aba6-1480-4895-9d0a-0eaf280f746d" /></p>
+<p><em>图 2.2：上下行车辆计数效果 — 场景1。左侧区域统计上行车辆（UP），右侧区域统计下行车辆（DOWN）。</em></p>
+<p><img alt="上下行计数效果2" src="https://github.com/user-attachments/assets/f57b7ac7-977d-475a-bb7f-1f6188e74d6b" /></p>
+<p><em>图 2.3：上下行车辆计数效果 — 场景2。可以看到不同车辆类型的分类标注。</em></p>
+<p><img alt="上下行计数效果3" src="https://github.com/user-attachments/assets/87f410f0-aa2d-4741-a3d8-51dd4cec2332" /></p>
+<p><em>图 2.4：上下行车辆计数效果 — 场景3。连续帧的计数稳定性验证。</em></p>
+<hr />
+<h4 id="244-carla-pr-5230">2.4.4 CARLA版 — 模拟器集成（PR #5230）</h4>
+<p><strong>目标</strong>：与 CARLA 自动驾驶模拟器深度集成，形成数据采集到检测验证的闭环。</p>
+<p><strong>核心模块</strong>：</p>
+<p><strong>1. CARLA 车辆生成器 (<code>carla_launcher.py</code>)</strong></p>
 <ul>
-<li>新增模型配置 <code>yolo12-A2C2f-DFFN.yaml</code></li>
-<li>使用 DFFN（Deep Feed-Forward Network）模块替代标准 A2C2f</li>
-<li>DFFN 通过加深前馈网络增强非线性表达能力</li>
+<li>优化的车辆生成算法，支持生成 100 辆正常行驶的小汽车</li>
+<li>解决了转弯、直行时的碰撞卡死问题</li>
+<li>支持自定义车辆数量和生成位置</li>
+</ul>
+<p><strong>2. CARLA 专用计数脚本 (<code>yolo_vehicle_counter_carla.py</code>)</strong></p>
+<ul>
+<li>针对 CARLA 录制视频的特殊优化</li>
+<li>红线计数位置调整为 y=500（适配 CARLA 摄像头视角）</li>
+<li>ROI 区域调优，减少天空区域的干扰</li>
+<li>置信度阈值降至 0.4，适应 CARLA 中较小的车辆目标</li>
+</ul>
+<p><strong>3. 集成入口</strong></p>
+<ul>
+<li>通过 <code>--version carla</code> 参数直接调用 CARLA 专用版本</li>
+<li>与 CARLA 0.9.x 完全兼容</li>
+</ul>
+<p><strong>测试环境</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>配置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>Windows 10</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.12</td>
+</tr>
+<tr>
+<td>CARLA</td>
+<td>0.9.x</td>
+</tr>
+<tr>
+<td>测试规模</td>
+<td>100 辆小汽车</td>
+</tr>
+</tbody>
+</table>
+<p><strong>运行效果</strong>：</p>
+<p><img alt="CARLA版运行效果" src="https://github.com/user-attachments/assets/ee2f6b24-e7d6-489d-ad08-9ea0ac8eae34" /></p>
+<p><em>图 2.5：CARLA 模拟器环境下的车辆计数效果。可以看到 CARLA 生成的虚拟交通场景中，系统成功检测并计数过往车辆。</em></p>
+<hr />
+<h4 id="245-pr-5232">2.4.5 区域版 — 高级区域计数（PR #5232）</h4>
+<p><strong>目标</strong>：支持复杂路况下的高级区域计数功能。</p>
+<p><strong>核心特性</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检测平滑</td>
+<td>检测结果平滑处理，避免车辆位置突变</td>
+</tr>
+<tr>
+<td>双向交通流</td>
+<td>分别统计上行和下行方向的车辆</td>
+</tr>
+<tr>
+<td>多边形区域</td>
+<td>支持自定义复杂道路布局的多边形计数</td>
+</tr>
+<tr>
+<td>视觉增强</td>
+<td>半透明覆盖区域和轨迹注解</td>
+</tr>
+<tr>
+<td>动态缩放</td>
+<td>自动适应不同视频分辨率</td>
+</tr>
+<tr>
+<td>底部中心计数</td>
+<td>使用底部中心点作为计数参考，提高准确性</td>
+</tr>
+</tbody>
+</table>
+<p><strong>技术实现细节</strong>：</p>
+<ul>
+<li><strong>检测平滑处理</strong>：对连续帧的检测结果进行平滑滤波，消除抖动</li>
+<li><strong>底部中心计数策略</strong>：使用边界框底部中心点作为车辆位置参考，比传统中心点更准确地反映车辆实际位置</li>
+<li><strong>动态区域缩放</strong>：根据视频分辨率自动调整多边形区域坐标，确保在不同分辨率下都能正确计数</li>
+<li><strong>半透明叠加层</strong>：使用 alpha 混合绘制监控区域，视觉效果更专业</li>
+</ul>
+<p><strong>测试内容</strong>：</p>
+<ul>
+<li>区域计数版本的正常启动和运行</li>
+<li>多边形区域计数的准确性</li>
+<li>双向交通流分别统计功能</li>
+<li>不同分辨率视频的自适应能力</li>
+<li>与其他版本的兼容性</li>
+</ul>
+<p><strong>运行效果</strong>：</p>
+<p><img alt="区域计数效果1" src="https://github.com/user-attachments/assets/102ca2fd-6bc5-4d1d-b8f4-74298d385ef3" /></p>
+<p><em>图 2.6：高级区域计数效果 — 多边形区域定义与双向交通流统计。</em></p>
+<p><img alt="区域计数效果2" src="https://github.com/user-attachments/assets/5ca981b5-966d-4733-9a3b-1b45c7661348" /></p>
+<p><em>图 2.7：区域计数效果 — 不同场景下的计数准确性验证。</em></p>
+<hr />
+<h3 id="25-pr-5236">2.5 精度衡量功能（PR #5236）</h3>
+<p><strong>目标</strong>：为车辆计数系统添加量化评估能力，支持与真值数据对比。</p>
+<p><strong>功能特性</strong>：</p>
+<ul>
+<li><code>--ground-truth</code> 参数支持真值文件输入</li>
+<li>支持两种真值格式：</li>
+<li><strong>简单数字格式</strong>：整个视频的真实车辆总数</li>
+<li><strong>分段验证格式</strong>：每行一个数字，对应各段的车辆数</li>
+<li>实时显示精度指标（ACC、F1 分数）</li>
+<li>处理结束后输出详细的精度报告</li>
+<li>基于检测置信度的帧级精度计算</li>
+</ul>
+<p><strong>使用方法</strong>：</p>
+<pre><code class="language-bash"># 使用简单数字格式的真值文件
+python main.py --version original --ground-truth dataset/ground_truth/ground_truth.txt
+
+# 使用改进版本 + 真值对比
+python main.py --version improved --ground-truth dataset/ground_truth/ground_truth.txt
+</code></pre>
+<p><strong>精度指标说明</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>公式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACC (准确率)</td>
+<td>(TP + TN) / (TP + TN + FP + FN)</td>
+<td>整体检测准确度</td>
+</tr>
+<tr>
+<td>F1 Score</td>
+<td>2 * (Precision * Recall) / (Precision + Recall)</td>
+<td>精确率与召回率的调和平均</td>
+</tr>
+</tbody>
+</table>
+<p><strong>运行效果</strong>：</p>
+<p><img width="1849" height="1080" alt="精度衡量运行效果" src="https://github.com/user-attachments/assets/14b8d8dc-d5c9-414b-8313-20de179ffe28" /></p>
+<p><em>图 2.8：精度衡量功能运行效果。可以看到实时显示的 ACC 和 F1 指标。</em></p>
+<p><img alt="精度报告1" src="https://github.com/user-attachments/assets/9779cc1c-c789-4b7b-bc5b-7473f7097c79" /></p>
+<p><em>图 2.9：处理完成后的精度报告 — 检测结果统计。</em></p>
+<p><img alt="精度报告2" src="https://github.com/user-attachments/assets/b0a49fda-cfb3-4ade-a5f3-d7ce88e3e48c" /></p>
+<p><em>图 2.10：精度报告 — 帧级精度分析与整体评估。</em></p>
+<h3 id="26">2.6 版本对比总结</h3>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>PR</th>
+<th>核心特性</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>original</td>
+<td>#5215</td>
+<td>基础矩形框检测计数</td>
+<td>简单路况、快速验证</td>
+</tr>
+<tr>
+<td>improved</td>
+<td>#5221</td>
+<td>椭圆标注 + 多边形 ROI</td>
+<td>复杂监控区域</td>
+</tr>
+<tr>
+<td>updown</td>
+<td>#5229</td>
+<td>上下行分方向计数</td>
+<td>双向车道</td>
+</tr>
+<tr>
+<td>carla</td>
+<td>#5230</td>
+<td>CARLA 模拟器集成</td>
+<td>仿真环境测试</td>
+</tr>
+<tr>
+<td>region</td>
+<td>#5232</td>
+<td>高级区域计数 + 平滑</td>
+<td>复杂路况、高精度需求</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-yolo12-carla">3. 项目二：YOLO12 CARLA 数据集目标检测</h2>
+<h3 id="31">3.1 项目概述</h3>
+<p>本项目基于 YOLO12 架构，在 CARLA 模拟器生成的目标检测数据集上完成从 Baseline 训练到模型改进的全流程实验。项目包含数据集配置、Baseline 训练验证、以及两种改进模型的设计与实现。</p>
+<p><strong>相关 PR</strong>：#5263、#5268、#5276、#5303</p>
+<h3 id="32">3.2 项目目录结构</h3>
+<pre><code>yolo12_object_detection/
+├── main.py                          # 统一入口（train/val/predict）
+├── README.md                        # 项目文档
+├── requirements.txt                 # 依赖配置
+├── dataset/                         # CARLA 数据集
+│   ├── data.yaml                    # 数据集配置文件
+│   ├── images/                      # 图像数据
+│   │   ├── train/                   # 训练集
+│   │   ├── val/                     # 验证集
+│   │   └── test/                    # 测试集
+│   └── annotations/                 # 标注文件
+│       ├── train.json
+│       ├── val.json
+│       ├── test.json
+│       └── trainval.json
+├── scripts/                         # 核心脚本
+│   ├── train.py                     # 训练脚本
+│   ├── val.py                       # 验证脚本
+│   └── ultralytics/                 # Ultralytics 框架源码
+│       └── cfg/models/12/           # YOLO12 模型配置
+│           ├── yolo12.yaml          # 基线模型
+│           ├── yolo12-A2C2f-CGLU.yaml  # CGLU 改进模型
+│           └── yolo12-A2C2f-DFFN.yaml  # DFFN 改进模型
+└── res/                             # 实验结果
+</code></pre>
+<h3 id="33">3.3 数据集</h3>
+<p>数据集来源：<a href="https://github.com/DanielHfnr/Carla-Object-Detection-Dataset">Carla-Object-Detection-Dataset</a></p>
+<p>该数据集由 CARLA 模拟器自动生成，包含多种城市场景（Town05 等）下的目标检测标注。</p>
+<p><strong>类别定义</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>类别ID</th>
+<th>类别名称</th>
+<th>说明</th>
+<th>颜色标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>vehicle</td>
+<td>车辆</td>
+<td>红色</td>
+</tr>
+<tr>
+<td>1</td>
+<td>bike</td>
+<td>自行车</td>
+<td>绿色</td>
+</tr>
+<tr>
+<td>2</td>
+<td>motobike</td>
+<td>摩托车</td>
+<td>蓝色</td>
+</tr>
+<tr>
+<td>3</td>
+<td>traffic_light</td>
+<td>交通灯</td>
+<td>黄色</td>
+</tr>
+<tr>
+<td>4</td>
+<td>traffic_sign</td>
+<td>交通标志</td>
+<td>紫色</td>
+</tr>
+</tbody>
+</table>
+<p><strong>数据集配置 (<code>data.yaml</code>)</strong>：</p>
+<pre><code class="language-yaml">path: dataset/
+train: images/train
+val: images/val
+test: images/test
+
+nc: 5
+names: ['vehicle', 'bike', 'motobike', 'traffic_light', 'traffic_sign']
+</code></pre>
+<p><strong>数据集获取</strong>：</p>
+<p>数据集可通过 Google Drive 下载：<a href="https://drive.google.com/drive/folders/1lApgN0pp_OcZ4L1fXWY4Vabs8F3vTZcM">下载链接</a></p>
+<h3 id="34-baseline-pr-52635268">3.4 Baseline 训练与验证（PR #5263、#5268）</h3>
+<h4 id="341-pr-5263">3.4.1 项目初始化（PR #5263）</h4>
+<p>创建了项目的基础文档和结构：</p>
+<ul>
+<li>项目简介、环境要求、目录结构和使用说明</li>
+<li>配置数据集来源信息</li>
+<li>提供多种 YOLO12 模型版本使用说明（n/s/m/l/x）</li>
+<li>添加待完善事项清单</li>
+</ul>
+<h4 id="342-baseline-pr-5268">3.4.2 Baseline 训练完成（PR #5268）</h4>
+<p>完成了完整的训练验证管线，这是项目中最大的 PR（+359,726 行代码），包含：</p>
+<p><strong>统一入口 <code>main.py</code></strong>：</p>
+<pre><code class="language-bash"># 训练
+python main.py train
+
+# 验证
+python main.py val
+
+# 推理
+python main.py predict
+</code></pre>
+<p><strong>训练配置</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型</td>
+<td>YOLO12n</td>
+<td>Nano 版本，平衡速度与精度</td>
+</tr>
+<tr>
+<td>图像尺寸</td>
+<td>640</td>
+<td>输入分辨率</td>
+</tr>
+<tr>
+<td>置信度阈值</td>
+<td>0.25</td>
+<td>检测置信度阈值</td>
+</tr>
+<tr>
+<td>IoU 阈值</td>
+<td>0.45</td>
+<td>NMS IoU 阈值</td>
+</tr>
+<tr>
+<td>类别数</td>
+<td>5</td>
+<td>vehicle, bike, motobike, traffic_light, traffic_sign</td>
+</tr>
+</tbody>
+</table>
+<p><strong>数据集路径修正</strong>：</p>
+<ul>
+<li>修正数据集路径从 <code>datasets/carla/</code> 改为 <code>dataset/</code></li>
+<li>修正配置文件名从 <code>carla.yaml</code> 改为 <code>data.yaml</code></li>
+</ul>
+<p><strong>运行效果</strong>：</p>
+<p><img width="1849" height="1040" alt="Baseline训练效果1" src="https://github.com/user-attachments/assets/0d9c9031-3965-46d4-be71-60b315ea0c80" /></p>
+<p><em>图 3.1：YOLO12 Baseline 训练过程 — 训练损失曲线与验证指标。</em></p>
+<p><img width="1849" height="1040" alt="Baseline训练效果2" src="https://github.com/user-attachments/assets/87c5542a-4ddf-4186-b8f4-ad93b853c070" /></p>
+<p><em>图 3.2：YOLO12 Baseline 验证效果 — 检测结果可视化。</em></p>
+<h3 id="35">3.5 模型改进</h3>
+<p>在 Baseline 基础上，提出了两种改进方案，通过替换 YOLO12 中的标准 A2C2f 模块实现性能提升。</p>
+<h4 id="351-a2c2f-cglu-pr-5276">3.5.1 A2C2f-CGLU 改进模型（PR #5276）</h4>
+<p><strong>改进思路</strong>：</p>
+<p>CGLU（Convolutional Gated Linear Unit）是一种结合卷积操作和门控线性单元的模块。其核心思想是通过门控机制增强特征选择能力：</p>
+<pre><code>标准 A2C2f:          A2C2f-CGLU:
+Input                 Input
+  ↓                     ↓
+Conv → BN → SiLU     Conv → BN → SiLU
+  ↓                     ↓
+Conv → BN → SiLU     GLU Gate (σ(x) ⊙ x)
+  ↓                     ↓
+Output                Conv → BN → SiLU
+                        ↓
+                      Output
+</code></pre>
+<p><strong>技术优势</strong>：</p>
+<ul>
+<li><strong>门控机制</strong>：通过 sigmoid 门控选择性地保留重要特征，抑制噪声</li>
+<li><strong>小目标增强</strong>：门控机制有助于提升小目标（如远处车辆、交通标志）的检测精度</li>
+<li><strong>参数效率</strong>：GLU 结构在增加少量参数的同时显著提升表达能力</li>
+</ul>
+<p><strong>配置文件 <code>yolo12-A2C2f-CGLU.yaml</code></strong>：</p>
+<ul>
+<li>使用 A2C2f_CGLU 模块替换标准 A2C2f 模块</li>
+<li>预设模型类别数为 5，适配 CARLA 数据集</li>
+<li>保持与原始 YOLO12 的兼容性</li>
+</ul>
+<p><strong>运行效果</strong>：</p>
+<p><img width="1849" height="1040" alt="A2C2f-CGLU模型配置" src="https://github.com/user-attachments/assets/82e82b18-206c-4511-ad33-de17c92d146e" /></p>
+<p><em>图 3.3：A2C2f-CGLU 改进模型配置验证 — 模型结构定义与语法检查通过。</em></p>
+<hr />
+<h4 id="352-a2c2f-dffn-pr-5303">3.5.2 A2C2f-DFFN 改进模型（PR #5303）</h4>
+<p><strong>改进思路</strong>：</p>
+<p>DFFN（Deep Feed-Forward Network）通过加深前馈网络的层数来增强模型的非线性表达能力：</p>
+<pre><code>标准 A2C2f:          A2C2f-DFFN:
+Input                 Input
+  ↓                     ↓
+Conv → BN → SiLU     Conv → BN → SiLU
+  ↓                     ↓
+Conv → BN → SiLU     FFN Layer 1 (Conv → GELU)
+  ↓                     ↓
+Output                FFN Layer 2 (Conv → GELU)
+                        ↓
+                      Residual Connection
+                        ↓
+                      Output
+</code></pre>
+<p><strong>技术优势</strong>：</p>
+<ul>
+<li><strong>深层非线性</strong>：多层 FFN 结构增强了模型对复杂模式的拟合能力</li>
+<li><strong>残差连接</strong>：保留梯度流，避免深层网络的退化问题</li>
+<li><strong>复杂场景适应</strong>：深层结构有助于处理复杂背景和多类别检测</li>
+</ul>
+<p><strong>配置文件 <code>yolo12-A2C2f-DFFN.yaml</code></strong>：</p>
+<ul>
+<li>使用 A2C2f_DFFN 模块替换标准 A2C2f 模块</li>
+<li>预设模型类别数为 5，适配 CARLA 数据集</li>
 <li>与 CGLU 模型共存于项目中，支持对比实验</li>
 </ul>
-<h3 id="3-5">3. 5 两种改进方案对比</h3>
+<p><strong>运行效果</strong>：</p>
+<p><img width="1849" height="1040" alt="A2C2f-DFFN模型配置" src="https://github.com/user-attachments/assets/450d1b58-a53e-497c-b84b-c59295f72817" /></p>
+<p><em>图 3.4：A2C2f-DFFN 改进模型配置验证 — 模型结构定义与语法检查通过。</em></p>
+<h3 id="36">3.6 两种改进方案对比</h3>
 <table>
 <thead>
 <tr>
@@ -279,121 +758,210 @@ python main.py predict  # 推理
 <td>深层前馈网络增强非线性</td>
 </tr>
 <tr>
+<td>改进模块</td>
+<td>CGLU (Convolutional Gated Linear Unit)</td>
+<td>DFFN (Deep Feed-Forward Network)</td>
+</tr>
+<tr>
+<td>关键机制</td>
+<td>Sigmoid 门控 + 逐元素乘法</td>
+<td>多层 FFN + 残差连接</td>
+</tr>
+<tr>
 <td>适用场景</td>
 <td>小目标、密集场景</td>
 <td>复杂背景、多类别</td>
 </tr>
 <tr>
-<td>模块结构</td>
-<td>GLU 门控 + 卷积</td>
-<td>多层 FFN + 残差</td>
+<td>参数开销</td>
+<td>较低</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>梯度流</td>
+<td>门控天然保持梯度</td>
+<td>残差连接保持梯度</td>
+</tr>
+<tr>
+<td>预期优势</td>
+<td>提升小目标检测精度</td>
+<td>提升复杂场景检测能力</td>
 </tr>
 </tbody>
 </table>
+<h3 id="37">3.7 模型配置文件结构</h3>
+<p>改进模型的 YAML 配置文件位于 <code>scripts/ultralytics/cfg/models/12/</code> 目录下：</p>
+<pre><code>scripts/ultralytics/cfg/models/12/
+├── yolo12.yaml              # 基线模型配置
+├── yolo12-A2C2f-CGLU.yaml   # CGLU 改进模型配置
+└── yolo12-A2C2f-DFFN.yaml   # DFFN 改进模型配置
+</code></pre>
+<p>所有改进模型配置均预设 <code>nc: 5</code>（类别数），直接适配 CARLA 数据集，无需额外修改即可开始训练。</p>
 <hr />
 <h2 id="4">4. 开源协作流程</h2>
-<h3 id="4-1-pr">4. 1 PR 提交记录</h3>
+<h3 id="41-pr">4.1 PR 提交记录</h3>
 <table>
 <thead>
 <tr>
 <th>PR#</th>
 <th>标题</th>
 <th>合并时间</th>
+<th>文件数</th>
 <th>改动量</th>
+<th>项目</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>#5169</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5169">#5169</a></td>
 <td>update readme&amp;requirements</td>
 <td>2026-03-14</td>
+<td>2</td>
 <td>+4/-3</td>
+<td>文档</td>
 </tr>
 <tr>
-<td>#5215</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5215">#5215</a></td>
 <td>添加项目yolo11n_vehicle_counter</td>
 <td>2026-04-05</td>
+<td>6</td>
 <td>+466/-0</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5221</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5221">#5221</a></td>
 <td>更新改进版本</td>
 <td>2026-04-05</td>
+<td>3</td>
 <td>+268/-9</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5229</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5229">#5229</a></td>
 <td>添加上下行车辆计数版本</td>
 <td>2026-04-06</td>
+<td>3</td>
 <td>+277/-5</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5230</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5230">#5230</a></td>
 <td>添加CARLA模拟器支持</td>
 <td>2026-04-06</td>
+<td>4</td>
 <td>+573/-3</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5232</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5232">#5232</a></td>
 <td>添加区域计数版本支持</td>
 <td>2026-04-07</td>
+<td>3</td>
 <td>+247/-3</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5236</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5236">#5236</a></td>
 <td>添加精度衡量功能</td>
 <td>2026-04-07</td>
+<td>3</td>
 <td>+136/-6</td>
+<td>车辆计数</td>
 </tr>
 <tr>
-<td>#5263</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5263">#5263</a></td>
 <td>YOLO12在Carla数据集上的目标检测实验</td>
 <td>2026-04-10</td>
+<td>1</td>
 <td>+66/-0</td>
+<td>目标检测</td>
 </tr>
 <tr>
-<td>#5268</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5268">#5268</a></td>
 <td>完成Baseline的训练与验证</td>
 <td>2026-04-11</td>
+<td>981</td>
 <td>+359726/-26</td>
+<td>目标检测</td>
 </tr>
 <tr>
-<td>#5276</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5276">#5276</a></td>
 <td>更新yolo12-A2C2f-CGLU模型</td>
 <td>2026-04-13</td>
+<td>5</td>
 <td>+100/-4</td>
+<td>目标检测</td>
 </tr>
 <tr>
-<td>#5303</td>
+<td><a href="https://github.com/OpenHUTB/nn/pull/5303">#5303</a></td>
 <td>更新yolo12-A2C2f-DFFN模型</td>
 <td>2026-04-13</td>
+<td>3</td>
 <td>+52/-2</td>
+<td>目标检测</td>
 </tr>
 </tbody>
 </table>
-<h3 id="4-2">4. 2 协作规范</h3>
+<h3 id="42">4.2 协作规范</h3>
+<p><strong>PR 模板要求</strong>：</p>
+<p>每个 PR 严格遵循项目模板，包含以下部分：</p>
+<ol>
+<li><strong>修改概述</strong>：简要说明本次变更的目的</li>
+<li><strong>修改的详细描述</strong>：逐条列出具体改动</li>
+<li><strong>测试信息</strong>：操作系统、Python 版本、测试内容</li>
+<li><strong>运行效果</strong>：截图或视频展示</li>
+</ol>
+<p><strong>协作实践</strong>：</p>
 <ul>
-<li>遵循项目 PR 模板，包含变更说明、详细描述、测试信息和运行效果</li>
 <li>所有文档使用中文撰写，代码注释完整</li>
 <li>每个 PR 聚焦单一功能点，保持提交粒度合理</li>
 <li>合作者：charon191910</li>
 <li>AI 辅助工具：Claude Opus 4.6</li>
 </ul>
+<h3 id="43">4.3 贡献时间线</h3>
+<pre><code>2026-03-14  ──  PR #5169  ──  项目初始化（README + requirements）
+    │
+    ├── 2026-04-05  ──  PR #5215  ──  YOLO11n 车辆计数系统（原版）
+    ├── 2026-04-05  ──  PR #5221  ──  改进版（椭圆标注 + 多边形ROI）
+    ├── 2026-04-06  ──  PR #5229  ──  上下行版本
+    ├── 2026-04-06  ──  PR #5230  ──  CARLA 模拟器集成
+    ├── 2026-04-07  ──  PR #5232  ──  区域计数版本
+    ├── 2026-04-07  ──  PR #5236  ──  精度衡量功能
+    │
+    ├── 2026-04-10  ──  PR #5263  ──  YOLO12 项目文档
+    ├── 2026-04-11  ──  PR #5268  ──  Baseline 训练与验证
+    ├── 2026-04-13  ──  PR #5276  ──  A2C2f-CGLU 改进模型
+    └── 2026-04-13  ──  PR #5303  ──  A2C2f-DFFN 改进模型
+</code></pre>
 <hr />
 <h2 id="5">5. 总结与展望</h2>
-<h3 id="5-1">5. 1 工作总结</h3>
+<h3 id="51">5.1 工作总结</h3>
 <p>本课程实践围绕自动驾驶感知系统，完成了以下核心工作：</p>
-<ol>
-<li><strong>车辆计数系统</strong>：从零构建了五版本迭代的车辆计数管线，覆盖基础检测、增强可视化、双向计数、仿真集成和区域计数等场景，并集成了量化评估能力。</li>
-<li><strong>YOLO12 目标检测</strong>：在 CARLA 数据集上完成了 Baseline 训练，提出了两种基于模块替换的改进方案（CGLU 和 DFFN），为后续性能对比实验奠定基础。</li>
-<li><strong>开源协作</strong>：严格遵循开源协作规范，完成 11 个 PR 的提交与合并，积累了完整的开源项目贡献经验。</li>
-</ol>
-<h3 id="5-2">5. 2 未来展望</h3>
+<p><strong>1. YOLO11n 车辆计数系统</strong></p>
+<p>从零构建了五版本迭代的车辆计数管线：
+- <strong>原版</strong>：基础矩形框检测与计数
+- <strong>改进版</strong>：椭圆标注 + 多边形 ROI，视觉效果与灵活性提升
+- <strong>上下行版</strong>：双向车道分方向计数
+- <strong>CARLA版</strong>：与 CARLA 模拟器深度集成
+- <strong>区域版</strong>：高级区域计数 + 检测平滑 + 动态缩放
+- <strong>精度衡量</strong>：ACC、F1 等量化评估指标</p>
+<p><strong>2. YOLO12 目标检测实验</strong></p>
+<p>在 CARLA 数据集上完成了完整的研究流程：
+- 配置数据集（5 类别：vehicle, bike, motobike, traffic_light, traffic_sign）
+- 完成 Baseline（YOLO12n）训练与验证
+- 提出两种改进方案：A2C2f-CGLU（门控增强）和 A2C2f-DFFN（深层前馈）</p>
+<p><strong>3. 开源协作经验</strong></p>
 <ul>
-<li>完成 A2C2f-CGLU 和 A2C2f-DFFN 两种改进模型的训练与性能对比</li>
+<li>严格遵循开源协作规范，完成 11 个 PR 的提交与合并</li>
+<li>积累了 Issue 分析、分支管理、功能开发、测试验证、文档撰写的全流程经验</li>
+</ul>
+<h3 id="52">5.2 未来展望</h3>
+<ul>
+<li>完成 A2C2f-CGLU 和 A2C2f-DFFN 两种改进模型的训练与性能对比实验</li>
 <li>将车辆计数系统与 YOLO12 检测模型集成，探索更强大的检测 backbone</li>
-<li>在 CARLA 中构建更复杂的交通场景进行压力测试</li>
+<li>在 CARLA 中构建更复杂的交通场景（夜间、雨天、拥堵等）进行压力测试</li>
 <li>探索多传感器融合（LiDAR + Camera）的感知方案</li>
+<li>将改进模型部署到边缘设备（如 Jetson Nano）进行实时性验证</li>
 </ul>
 <hr />
 <h2 id="_2">参考资料</h2>
@@ -402,6 +970,7 @@ python main.py predict  # 推理
 <li><a href="https://github.com/DanielHfnr/Carla-Object-Detection-Dataset">Carla-Object-Detection-Dataset</a></li>
 <li><a href="https://docs.ultralytics.com/">Ultralytics YOLO 文档</a></li>
 <li><a href="https://github.com/roboflow/supervision">Supervision 目标检测工具库</a></li>
+<li><a href="https://carla.readthedocs.io/">CARLA 模拟器官方文档</a></li>
 </ol>
               
             </div>
