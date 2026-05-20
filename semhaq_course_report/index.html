@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>基于 YOLO 的自动驾驶感知系统：车辆计数与目标检测 - 神经网络</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "\u57fa\u4e8e YOLO \u7684\u81ea\u52a8\u9a7e\u9a76\u611f\u77e5\u7cfb\u7edf\uff1a\u8f66\u8f86\u8ba1\u6570\u4e0e\u76ee\u6807\u68c0\u6d4b";
+        var mkdocs_page_input_path = "semhaq_course_report.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> 神经网络
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">首页</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../carla_yolo_detection/">自动驾驶感知系统</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">神经网络</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">基于 YOLO 的自动驾驶感知系统：车辆计数与目标检测</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/OpenHUTB/nn/edit/master/docs/semhaq_course_report.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="yolo">基于 YOLO 的自动驾驶感知系统：车辆计数与目标检测</h1>
+<h2 id="_1">摘要</h2>
+<p>本文档详细记录了在《基础软件和开源系统》课程中，围绕 <code>OpenHUTB/nn</code> 开源仓库完成的系列贡献工作。项目聚焦于自动驾驶感知领域，完成了两个核心子系统：<strong>基于 YOLO11n 的多版本车辆计数系统</strong>和<strong>基于 YOLO12 的 CARLA 数据集目标检测实验</strong>。</p>
+<p>车辆计数系统从基础版本迭代至五个功能版本（原版、改进版、上下行版、CARLA 版、区域版），并集成了精度衡量功能。YOLO12 目标检测项目则完成了从数据集配置、Baseline 训练验证到两种改进模型（A2C2f-CGLU、A2C2f-DFFN）设计的完整研发流程。</p>
+<p>整个项目历时一个月（2026年3月14日 - 4月13日），共提交 <strong>11 个 Pull Request</strong> 并全部合并，累计新增代码超过 <strong>36 万行</strong>，涵盖工程开发、模型训练、性能评估与开源协作的全生命周期。</p>
+<hr />
+<h2 id="1">1. 项目背景与立项依据</h2>
+<h3 id="1-1">1. 1 课程实践背景</h3>
+<p>本项目源于《基础软件和开源系统》课程的实践要求，旨在通过向开源社区（<code>OpenHUTB/nn</code>）贡献高质量的代码与文档，完整走通 <strong>"Issue 分析 -&gt; 分支管理 -&gt; 功能开发 -&gt; 测试验证 -&gt; 文档撰写 -&gt; Pull Request 提交"</strong> 的标准化软件工程流程。</p>
+<p><code>OpenHUTB/nn</code> 是湖南工商大学的神经网络教学与科研平台，使用神经网络实现感知、规划和控制功能，覆盖 Carla（自动驾驶）、AirSim（无人机）和 MuJoCo（人形机器人）三大模拟器。</p>
+<h3 id="1-2">1. 2 技术背景</h3>
+<p>在自动驾驶感知系统中，<strong>车辆检测与计数</strong>是交通流量分析、智能交通管理的基础能力。传统方法依赖于背景减除或光流法，受光照变化和遮挡影响较大。YOLO 系列模型作为单阶段目标检测的代表，以高精度和实时性成为该领域的主流方案。</p>
+<p>本项目选取两个技术方向切入：</p>
+<ul>
+<li><strong>YOLO11n 车辆计数</strong>：基于 YOLO11n 轻量化模型，构建多场景、多功能的车辆计数管线，验证从基础检测到复杂场景计数的工程化能力。</li>
+<li><strong>YOLO12 目标检测</strong>：基于最新的 YOLO12 架构，在 CARLA 模拟器生成的数据集上进行训练与改进，探索注意力机制增强的检测模型。</li>
+</ul>
+<h3 id="1-3">1. 3 技术选型</h3>
+<table>
+<thead>
+<tr>
+<th>技术/工具</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 3.11+</td>
+<td>核心开发语言</td>
+</tr>
+<tr>
+<td>Ultralytics YOLO</td>
+<td>YOLO11n / YOLO12 模型框架</td>
+</tr>
+<tr>
+<td>OpenCV</td>
+<td>视频处理与可视化</td>
+</tr>
+<tr>
+<td>Supervision</td>
+<td>目标检测标注与跟踪工具库</td>
+</tr>
+<tr>
+<td>CARLA 0.9.x</td>
+<td>自动驾驶模拟器</td>
+</tr>
+<tr>
+<td>Windows 10 Pro</td>
+<td>开发与测试环境</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-yolo11n">2. 项目一：YOLO11n 多版本车辆计数系统</h2>
+<h3 id="2-1">2. 1 项目概述</h3>
+<p>本项目基于 YOLO11n 构建了一套可扩展的车辆计数系统，通过 <code>--version</code> 参数切换不同计数模式，逐步迭代出五个功能版本。系统支持实时视频处理、车辆轨迹绘制、多区域计数以及精度评估。</p>
+<p><strong>相关 PR</strong>：#5169、#5215、#5221、#5229、#5230、#5232、#5236</p>
+<h3 id="2-2">2. 2 系统架构</h3>
+<p>系统采用函数式架构设计，以 <code>main.py</code> 为统一入口，通过参数解析分发到不同版本的计数模块：</p>
+<pre><code>main.py (统一入口)
+├── --version original    → yolo_vehicle_counter.py
+├── --version improved    → yolo_vehicle_counter_improved.py
+├── --version updown      → yolo_vehicle_counter_updown.py
+├── --version carla       → yolo_vehicle_counter_carla.py
+└── --version region      → yolo_vehicle_counter_region.py
+</code></pre>
+<h3 id="2-3">2. 3 版本迭代详情</h3>
+<h4 id="231-pr-5215">2.3.1 原版（PR #5215）</h4>
+<p>基础版本实现了完整的车辆检测与计数流程：</p>
+<ul>
+<li>命令行参数解析（模型路径、输入/输出视频）</li>
+<li>实时视频处理，绘制车辆边界框与运动轨迹</li>
+<li>实时显示当前车辆计数</li>
+<li>支持 'p' 键暂停/恢复</li>
+</ul>
+<h4 id="232-pr-5221">2.3.2 改进版（PR #5221）</h4>
+<p>在原版基础上增强了可视化效果与区域选择能力：</p>
+<ul>
+<li>引入 <code>EllipseAnnotator</code> 椭圆标注替代矩形框，视觉效果更自然</li>
+<li>支持多边形 ROI（感兴趣区域），适应复杂监控场景</li>
+<li>优化轨迹跟踪与计数逻辑</li>
+<li>添加 <code>.gitignore</code> 排除大型模型目录</li>
+</ul>
+<h4 id="233-pr-5229">2.3.3 上下行版（PR #5229）</h4>
+<p>实现了分方向的车辆计数功能：</p>
+<ul>
+<li>基于分区的双向计数：左侧区域（0-550px）统计上行，右侧区域（550-1280px）统计下行</li>
+<li>通过 <code>--version updown</code> 参数调用</li>
+<li>代码符合 PEP 8 规范，注释完整</li>
+</ul>
+<h4 id="234-carla-pr-5230">2.3.4 CARLA 版（PR #5230）</h4>
+<p>集成了 CARLA 模拟器支持：</p>
+<ul>
+<li><code>carla_launcher.py</code>：优化的车辆生成算法，解决了碰撞/卡死问题，支持生成 100 辆车</li>
+<li><code>yolo_vehicle_counter_carla.py</code>：针对 CARLA 录制视频优化，红线位置 y=500，ROI 调优减少天空干扰，置信度阈值降至 0.4</li>
+<li>测试环境：Windows 10, Python 3.12, CARLA 0.9.x</li>
+</ul>
+<h4 id="235-pr-5232">2.3.5 区域版（PR #5232）</h4>
+<p>高级区域计数版本，支持复杂路况：</p>
+<ul>
+<li>检测平滑处理，减少计数抖动</li>
+<li>双向交通流量统计</li>
+<li>多边形区域计数，适应复杂道路布局</li>
+<li>自定义可视化增强（半透明叠加层、轨迹标注）</li>
+<li>动态区域缩放适配不同分辨率</li>
+<li>底部中心计数策略，提升准确性</li>
+</ul>
+<h3 id="2-4-pr-5236">2. 4 精度衡量功能（PR #5236）</h3>
+<p>为系统添加了完整的精度评估模块：</p>
+<ul>
+<li><code>--ground-truth</code> 参数支持真值文件输入</li>
+<li>支持两种格式：简单总数格式和分段验证格式（每行一个数字）</li>
+<li>实时显示 ACC 和 F1 指标</li>
+<li>处理完成后输出详细精度报告</li>
+<li>基于检测置信度的帧级精度计算</li>
+</ul>
+<pre><code class="language-bash">python main.py --version original --ground-truth dataset/ground_truth/ground_truth.txt
+</code></pre>
+<h3 id="2-5">2. 5 技术亮点</h3>
+<ol>
+<li><strong>模块化设计</strong>：统一入口 + 版本分发，新增版本无需修改主流程</li>
+<li><strong>渐进式迭代</strong>：从基础功能到复杂场景，每个版本解决特定问题</li>
+<li><strong>仿真集成</strong>：与 CARLA 模拟器深度集成，形成数据采集到检测验证的闭环</li>
+<li><strong>量化评估</strong>：引入精度指标，支持科学的性能对比</li>
+</ol>
+<hr />
+<h2 id="3-yolo12-carla">3. 项目二：YOLO12 CARLA 数据集目标检测</h2>
+<h3 id="3-1">3. 1 项目概述</h3>
+<p>本项目基于 YOLO12 架构，在 CARLA 模拟器生成的目标检测数据集上完成从 Baseline 训练到模型改进的全流程实验。</p>
+<p><strong>相关 PR</strong>：#5263、#5268、#5276、#5303</p>
+<h3 id="3-2">3. 2 数据集</h3>
+<p>数据集来源：<a href="https://github.com/DanielHfnr/Carla-Object-Detection-Dataset">Carla-Object-Detection-Dataset</a></p>
+<p>包含 5 个类别：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vehicle</td>
+<td>车辆</td>
+</tr>
+<tr>
+<td>bike</td>
+<td>自行车</td>
+</tr>
+<tr>
+<td>motobike</td>
+<td>摩托车</td>
+</tr>
+<tr>
+<td>traffic_light</td>
+<td>交通灯</td>
+</tr>
+<tr>
+<td>traffic_sign</td>
+<td>交通标志</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-3-baseline-pr-52635268">3. 3 Baseline 训练与验证（PR #5263、#5268）</h3>
+<p>完成了完整的训练验证管线：</p>
+<ul>
+<li>创建统一入口 <code>main.py</code>，支持 <code>train</code>、<code>val</code>、<code>predict</code> 三种命令</li>
+<li>配置数据集路径与 <code>data.yaml</code></li>
+<li>使用 YOLO12n 作为 Baseline 模型进行训练</li>
+<li>完成验证并记录性能指标</li>
+</ul>
+<pre><code class="language-bash">python main.py train    # 训练
+python main.py val      # 验证
+python main.py predict  # 推理
+</code></pre>
+<h3 id="3-4">3. 4 模型改进</h3>
+<p>在 Baseline 基础上，提出了两种改进方案，通过替换 YOLO12 中的标准 A2C2f 模块实现性能提升。</p>
+<h4 id="341-a2c2f-cglu-pr-5276">3.4.1 A2C2f-CGLU 改进模型（PR #5276）</h4>
+<ul>
+<li>新增模型配置 <code>yolo12-A2C2f-CGLU.yaml</code></li>
+<li>使用 CGLU（Convolutional Gated Linear Unit）模块替代标准 A2C2f</li>
+<li>CGLU 通过门控机制增强特征选择能力，有助于提升小目标检测精度</li>
+<li>预配置 5 类别适配 CARLA 数据集</li>
+</ul>
+<h4 id="342-a2c2f-dffn-pr-5303">3.4.2 A2C2f-DFFN 改进模型（PR #5303）</h4>
+<ul>
+<li>新增模型配置 <code>yolo12-A2C2f-DFFN.yaml</code></li>
+<li>使用 DFFN（Deep Feed-Forward Network）模块替代标准 A2C2f</li>
+<li>DFFN 通过加深前馈网络增强非线性表达能力</li>
+<li>与 CGLU 模型共存于项目中，支持对比实验</li>
+</ul>
+<h3 id="3-5">3. 5 两种改进方案对比</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>A2C2f-CGLU</th>
+<th>A2C2f-DFFN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心思想</td>
+<td>门控线性单元增强特征选择</td>
+<td>深层前馈网络增强非线性</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>小目标、密集场景</td>
+<td>复杂背景、多类别</td>
+</tr>
+<tr>
+<td>模块结构</td>
+<td>GLU 门控 + 卷积</td>
+<td>多层 FFN + 残差</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4">4. 开源协作流程</h2>
+<h3 id="4-1-pr">4. 1 PR 提交记录</h3>
+<table>
+<thead>
+<tr>
+<th>PR#</th>
+<th>标题</th>
+<th>合并时间</th>
+<th>改动量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#5169</td>
+<td>update readme&amp;requirements</td>
+<td>2026-03-14</td>
+<td>+4/-3</td>
+</tr>
+<tr>
+<td>#5215</td>
+<td>添加项目yolo11n_vehicle_counter</td>
+<td>2026-04-05</td>
+<td>+466/-0</td>
+</tr>
+<tr>
+<td>#5221</td>
+<td>更新改进版本</td>
+<td>2026-04-05</td>
+<td>+268/-9</td>
+</tr>
+<tr>
+<td>#5229</td>
+<td>添加上下行车辆计数版本</td>
+<td>2026-04-06</td>
+<td>+277/-5</td>
+</tr>
+<tr>
+<td>#5230</td>
+<td>添加CARLA模拟器支持</td>
+<td>2026-04-06</td>
+<td>+573/-3</td>
+</tr>
+<tr>
+<td>#5232</td>
+<td>添加区域计数版本支持</td>
+<td>2026-04-07</td>
+<td>+247/-3</td>
+</tr>
+<tr>
+<td>#5236</td>
+<td>添加精度衡量功能</td>
+<td>2026-04-07</td>
+<td>+136/-6</td>
+</tr>
+<tr>
+<td>#5263</td>
+<td>YOLO12在Carla数据集上的目标检测实验</td>
+<td>2026-04-10</td>
+<td>+66/-0</td>
+</tr>
+<tr>
+<td>#5268</td>
+<td>完成Baseline的训练与验证</td>
+<td>2026-04-11</td>
+<td>+359726/-26</td>
+</tr>
+<tr>
+<td>#5276</td>
+<td>更新yolo12-A2C2f-CGLU模型</td>
+<td>2026-04-13</td>
+<td>+100/-4</td>
+</tr>
+<tr>
+<td>#5303</td>
+<td>更新yolo12-A2C2f-DFFN模型</td>
+<td>2026-04-13</td>
+<td>+52/-2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-2">4. 2 协作规范</h3>
+<ul>
+<li>遵循项目 PR 模板，包含变更说明、详细描述、测试信息和运行效果</li>
+<li>所有文档使用中文撰写，代码注释完整</li>
+<li>每个 PR 聚焦单一功能点，保持提交粒度合理</li>
+<li>合作者：charon191910</li>
+<li>AI 辅助工具：Claude Opus 4.6</li>
+</ul>
+<hr />
+<h2 id="5">5. 总结与展望</h2>
+<h3 id="5-1">5. 1 工作总结</h3>
+<p>本课程实践围绕自动驾驶感知系统，完成了以下核心工作：</p>
+<ol>
+<li><strong>车辆计数系统</strong>：从零构建了五版本迭代的车辆计数管线，覆盖基础检测、增强可视化、双向计数、仿真集成和区域计数等场景，并集成了量化评估能力。</li>
+<li><strong>YOLO12 目标检测</strong>：在 CARLA 数据集上完成了 Baseline 训练，提出了两种基于模块替换的改进方案（CGLU 和 DFFN），为后续性能对比实验奠定基础。</li>
+<li><strong>开源协作</strong>：严格遵循开源协作规范，完成 11 个 PR 的提交与合并，积累了完整的开源项目贡献经验。</li>
+</ol>
+<h3 id="5-2">5. 2 未来展望</h3>
+<ul>
+<li>完成 A2C2f-CGLU 和 A2C2f-DFFN 两种改进模型的训练与性能对比</li>
+<li>将车辆计数系统与 YOLO12 检测模型集成，探索更强大的检测 backbone</li>
+<li>在 CARLA 中构建更复杂的交通场景进行压力测试</li>
+<li>探索多传感器融合（LiDAR + Camera）的感知方案</li>
+</ul>
+<hr />
+<h2 id="_2">参考资料</h2>
+<ol>
+<li><a href="https://github.com/OpenHUTB/nn">OpenHUTB/nn 项目仓库</a></li>
+<li><a href="https://github.com/DanielHfnr/Carla-Object-Detection-Dataset">Carla-Object-Detection-Dataset</a></li>
+<li><a href="https://docs.ultralytics.com/">Ultralytics YOLO 文档</a></li>
+<li><a href="https://github.com/roboflow/supervision">Supervision 目标检测工具库</a></li>
+</ol>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>OpenHUTB 版权所有 &copy; 2026</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/OpenHUTB/nn" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../extra.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
